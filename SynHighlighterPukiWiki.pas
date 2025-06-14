@@ -95,18 +95,28 @@ type
 
 implementation
 
+var
+  RegexBlockQuote: TRegEx;
+  RegexDelete: TRegEx;
+  RegexEmpasis1: TRegEx;
+  RegexEmpasis2: TRegEx;
+  RegexHeading: TRegEx;
+  RegexIndentedCode: TRegEx;
+  RegexList1: TRegEx;
+  RegexList2: TRegEx;
+  RegexPageLink: TRegEx;
+  RegexUrlLink: TRegEx;
+
 { TSynPukiWikiSyn }
 
 function TSynPukiWikiSyn.BlockQuoteProc: Boolean;
-const
-  BlockQuote = '^>.+$';
 var
   Ret: TMatch;
 begin
   if Run > 0 then
     Exit(False);
 
-  Ret := TRegEx.Match(FLine, BlockQuote, [roCompiled]);
+  Ret := RegexBlockQuote.Match(FLine);
   if Ret.Success then
   begin
     FTokenID := tkBlockQuote;
@@ -160,15 +170,10 @@ begin
 end;
 
 function TSynPukiWikiSyn.DeleteProc: Boolean;
-const
-  Delete = '(%%)[^%]+\1';
 var
   Ret: TMatch;
 begin
-  var
-    Regex: TRegEx := TRegEx.Create(Delete, [roCompiled]);
-
-  Ret := Regex.Match(FLine, Run + 1);
+  Ret := RegexDelete.Match(FLine, Run + 1);
   if Ret.Success and (Run = (Ret.Index - 1)) then
   begin
     FTokenID := tkDelete;
@@ -185,16 +190,10 @@ begin
 end;
 
 function TSynPukiWikiSyn.EmphasisProc: Boolean;
-const
-  Emphasis1 = '(''{2,3})[^'']+?\1';
-  Emphasis2 = '(%%%)[^%].*?\1';
 var
   Ret: TMatch;
 begin
-  var
-    Regex1: TRegEx := TRegEx.Create(Emphasis1, [roCompiled]);
-
-  Ret := Regex1.Match(FLine, Run + 1);
+  Ret := RegexEmpasis1.Match(FLine, Run + 1);
   if Ret.Success and (Run = (Ret.Index - 1)) then
   begin
     FTokenID := tkEmphasis;
@@ -202,10 +201,7 @@ begin
     Exit(True);
   end;
 
-  var
-    Regex2: TRegEx := TRegEx.Create(Emphasis2, [roCompiled]);
-
-  Ret := Regex2.Match(FLine, Run + 1);
+  Ret := RegexEmpasis2.Match(FLine, Run + 1);
   if Ret.Success and (Run = (Ret.Index - 1)) then
   begin
     FTokenID := tkEmphasis;
@@ -274,15 +270,13 @@ begin
 end;
 
 function TSynPukiWikiSyn.HeadingProc: Boolean;
-const
-  Heading = '^\*{1,3}.+$';
 var
   Ret: TMatch;
 begin
   if Run > 0 then
     Exit(False);
 
-  Ret := TRegEx.Match(FLine, Heading, [roCompiled]);
+  Ret := RegexHeading.Match(FLine);
   if Ret.Success then
   begin
     FTokenID := tkHeader;
@@ -293,15 +287,13 @@ begin
 end;
 
 function TSynPukiWikiSyn.IndentedCodeBlockProc: Boolean;
-const
-  Code = '^ .*';
 var
   Ret: TMatch;
 begin
   if Run > 0 then
     Exit(False);
 
-  Ret := TRegEx.Match(FLine, Code, [roCompiled]);
+  Ret := RegexIndentedCode.Match(FLine);
   if Ret.Success then
   begin
     FTokenID := tkCode;
@@ -312,16 +304,13 @@ begin
 end;
 
 function TSynPukiWikiSyn.ListProc: Boolean;
-const
-  List1 = '^([-+])(\1)*';
-  List2 = '^(:{1,3}).*\|';
 var
   Ret: TMatch;
 begin
   if Run > 0 then
     Exit(False);
 
-  Ret := TRegEx.Match(FLine, List1, [roCompiled]);
+  Ret := RegexList1.Match(FLine);
   if Ret.Success then
   begin
     if LeftStr(Ret.Value, 4) = '----' then
@@ -331,7 +320,7 @@ begin
     Exit(True);
   end;
 
-  Ret := TRegEx.Match(FLine, List2, [roCompiled]);
+  Ret := RegexList2.Match(FLine);
   if Ret.Success then
   begin
     FTokenID := tkList;
@@ -356,15 +345,10 @@ begin
 end;
 
 function TSynPukiWikiSyn.PageLinkProc: Boolean;
-const
-  Link = '\[\[.+?\]\]';
 var
   Ret: TMatch;
 begin
-  var
-    Regex: TRegEx := TRegEx.Create(Link, [roCompiled]);
-
-  Ret := Regex.Match(FLine, Run + 1);
+  Ret := RegexPageLink.Match(FLine, Run + 1);
   if Ret.Success and (Run = (Ret.Index - 1)) then
   begin
     FTokenID := tkLink;
@@ -375,15 +359,10 @@ begin
 end;
 
 function TSynPukiWikiSyn.UrlLinkProc: Boolean;
-const
-  Link = 'https?://[\w!?/+\-_~=;.,*&@#$%()'']+';
 var
   Ret: TMatch;
 begin
-  var
-    Regex: TRegEx := TRegEx.Create(Link, [roCompiled]);
-
-  Ret := Regex.Match(FLine, Run + 1);
+  Ret := RegexUrlLink.Match(FLine, Run + 1);
   if Ret.Success and (Run = (Ret.Index - 1)) then
   begin
     FTokenID := tkLink;
@@ -396,5 +375,16 @@ end;
 initialization
 
 RegisterPlaceableHighlighter(TSynPukiWikiSyn);
+
+RegexBlockQuote := TRegEx.Create('^>.+$', [roCompiled]);
+RegexDelete := TRegEx.Create('(%%)[^%]+\1', [roCompiled]);
+RegexEmpasis1 := TRegEx.Create('(''{2,3})[^'']+?\1', [roCompiled]);
+RegexEmpasis2 := TRegEx.Create('(%%%)[^%].*?\1', [roCompiled]);
+RegexHeading := TRegEx.Create('^\*{1,3}.+$', [roCompiled]);
+RegexIndentedCode := TRegEx.Create('^ .*', [roCompiled]);
+RegexList1 := TRegEx.Create('^([-+])(\1)*', [roCompiled]);
+RegexList2 := TRegEx.Create('^(:{1,3}).*\|', [roCompiled]);
+RegexPageLink := TRegEx.Create('\[\[.+?\]\]', [roCompiled]);
+RegexUrlLink := TRegEx.Create('https?://[\w!?/+\-_~=;.,*&@#$%()'']+', [roCompiled]);
 
 end.
