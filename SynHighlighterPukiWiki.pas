@@ -107,15 +107,12 @@ var
   RegexPageLink: TRegEx;
   RegexUrlLink: TRegEx;
 
-{ TSynPukiWikiSyn }
+  { TSynPukiWikiSyn }
 
 function TSynPukiWikiSyn.BlockQuoteProc: Boolean;
 var
   Ret: TMatch;
 begin
-  if Run > 0 then
-    Exit(False);
-
   Ret := RegexBlockQuote.Match(FLine);
   if Ret.Success then
   begin
@@ -273,9 +270,6 @@ function TSynPukiWikiSyn.HeadingProc: Boolean;
 var
   Ret: TMatch;
 begin
-  if Run > 0 then
-    Exit(False);
-
   Ret := RegexHeading.Match(FLine);
   if Ret.Success then
   begin
@@ -290,9 +284,6 @@ function TSynPukiWikiSyn.IndentedCodeBlockProc: Boolean;
 var
   Ret: TMatch;
 begin
-  if Run > 0 then
-    Exit(False);
-
   Ret := RegexIndentedCode.Match(FLine);
   if Ret.Success then
   begin
@@ -307,9 +298,6 @@ function TSynPukiWikiSyn.ListProc: Boolean;
 var
   Ret: TMatch;
 begin
-  if Run > 0 then
-    Exit(False);
-
   Ret := RegexList1.Match(FLine);
   if Ret.Success then
   begin
@@ -331,11 +319,20 @@ begin
 end;
 
 procedure TSynPukiWikiSyn.Next;
+var
+  Processed: Boolean;
 begin
   FTokenPos := Run;
 
-  if not(HeadingProc or BlockQuoteProc or ListProc or IndentedCodeBlockProc or
-    EmphasisProc or DeleteProc or UrlLinkProc or PageLinkProc) then
+  Processed := False;
+  if Run = 0 then
+  begin
+    Processed := HeadingProc or BlockQuoteProc or ListProc or
+      IndentedCodeBlockProc;
+  end;
+
+  if (not Processed) and not(EmphasisProc or DeleteProc or UrlLinkProc or
+    PageLinkProc) then
   begin
     FTokenID := tkUnknown;
     Inc(Run);
@@ -385,6 +382,7 @@ RegexIndentedCode := TRegEx.Create('^ .*', [roCompiled]);
 RegexList1 := TRegEx.Create('^([-+])(\1)*', [roCompiled]);
 RegexList2 := TRegEx.Create('^(:{1,3}).*\|', [roCompiled]);
 RegexPageLink := TRegEx.Create('\[\[.+?\]\]', [roCompiled]);
-RegexUrlLink := TRegEx.Create('https?://[\w!?/+\-_~=;.,*&@#$%()'']+', [roCompiled]);
+RegexUrlLink := TRegEx.Create('https?://[\w!?/+\-_~=;.,*&@#$%()'']+',
+  [roCompiled]);
 
 end.
