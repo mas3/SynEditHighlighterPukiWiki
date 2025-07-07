@@ -36,10 +36,11 @@ SynEdit1.Highlighter := HL;
 
 ### Componentization
 
-1. Open SynEditHighlighterPukiWiki.dproj
-2. Install SynEditHighlighterPukiWiki.bpl
-3. Place the TSynPukiWikiSyn component from the Tool Palette on the form
-4. In the Object Inspector, assign the TSynPukiWikiSyn component to the Highlighter
+1. Add the project directory to the IDE's library path
+2. Open SynEditHighlighterPukiWiki.dproj
+3. Install SynEditHighlighterPukiWiki.bpl
+4. Place the TSynPukiWikiSyn component from the Tool Palette on the form
+5. In the Object Inspector, assign the TSynPukiWikiSyn component to the Highlighter
    property of the SynEdit
 
 
