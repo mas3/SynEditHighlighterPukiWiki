@@ -37,13 +37,14 @@ uses
   System.RegularExpressions, SynEditHighlighter;
 
 type
-  TtkTokenKind = (tkUnknown, tkBlockQuote, tkCode, tkDelete, tkEmphasis,
-    tkHeader, tkLink, tkList, tkSpace);
+  TtkTokenKind = (tkUnknown, tkBlockQuote, tkCode, tkComment, tkDelete,
+    tkEmphasis, tkHeader, tkLink, tkList, tkSpace);
 
   TSynPukiWikiSyn = class(TSynCustomHighlighter)
   private
     FBlockQuoteAttri: TSynHighlighterAttributes;
     FCodeAttri: TSynHighlighterAttributes;
+    FCommentAttri: TSynHighlighterAttributes;
     FDeleteAttri: TSynHighlighterAttributes;
     FEmphasisAttri: TSynHighlighterAttributes;
     FHeadingAttri: TSynHighlighterAttributes;
@@ -55,6 +56,7 @@ type
     FTokenID: TtkTokenKind;
 
     function BlockQuoteProc: Boolean;
+    function CommentProc: Boolean;
     function DeleteProc: Boolean;
     function EmphasisProc: Boolean;
     function HeadingProc: Boolean;
@@ -79,6 +81,8 @@ type
       write FBlockQuoteAttri;
     property CodeAttri: TSynHighlighterAttributes read FCodeAttri
       write FCodeAttri;
+    property CommentAttri: TSynHighlighterAttributes read FCommentAttri
+      write FCommentAttri;
     property DeleteAttri: TSynHighlighterAttributes read FDeleteAttri
       write FDeleteAttri;
     property EmphasisAttri: TSynHighlighterAttributes read FEmphasisAttri
@@ -123,6 +127,17 @@ begin
   Result := False;
 end;
 
+function TSynPukiWikiSyn.CommentProc: Boolean;
+begin
+  if (Length(FLine) >= 2) and (FLine[0] = '/') and (FLine[1] = '/') then
+  begin
+    FTokenID := tkComment;
+    Run := Run + Length(FLine);
+    Exit(True);
+  end;
+  Result := False;
+end;
+
 constructor TSynPukiWikiSyn.Create(AOwner: TComponent);
 begin
   inherited Create(AOwner);
@@ -135,6 +150,10 @@ begin
   FCodeAttri := TSynHighlighterAttributes.Create('Code', 'Code');
   FCodeAttri.Foreground := clWebFirebrick;
   AddAttribute(FCodeAttri);
+
+  FCommentAttri := TSynHighlighterAttributes.Create('Comment', 'Comment');
+  FCommentAttri.Foreground := clWebDimGray;
+  AddAttribute(FCommentAttri);
 
   FDeleteAttri := TSynHighlighterAttributes.Create('Delete', 'Delete');
   FDeleteAttri.Foreground := clWebDimGray;
@@ -244,6 +263,8 @@ begin
       Result := FBlockQuoteAttri;
     tkCode:
       Result := FCodeAttri;
+    tkComment:
+      Result := FCommentAttri;
     tkDelete:
       Result := FDeleteAttri;
     tkEmphasis:
@@ -327,7 +348,7 @@ begin
   Processed := False;
   if Run = 0 then
   begin
-    Processed := HeadingProc or BlockQuoteProc or ListProc or
+    Processed := HeadingProc or BlockQuoteProc or CommentProc or ListProc or
       IndentedCodeBlockProc;
   end;
 
