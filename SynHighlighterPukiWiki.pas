@@ -352,8 +352,21 @@ begin
       IndentedCodeBlockProc;
   end;
 
-  if (not Processed) and not(EmphasisProc or DeleteProc or UrlLinkProc or
-    PageLinkProc) then
+  if not Processed then
+  begin
+    case FLine[Run] of
+      '''', '%':
+{$HINTS OFF}
+        Processed := EmphasisProc or DeleteProc;
+{$HINTS ON}
+      'h', 'H':
+        UrlLinkProc;
+      '[':
+        PageLinkProc;
+    end;
+  end;
+
+  if FTokenPos = Run then
   begin
     FTokenID := tkUnknown;
     Inc(Run);
